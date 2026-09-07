@@ -98,6 +98,7 @@ Only `video_N.mp3` is uploaded. `names.log` stays local for restore.
 | `No prepared files` | Press `1` first |
 | `names.log missing` | Re-run `1`, don't delete `upload\` mid-run |
 | `SRT skipped?` | Already restored - use `--force` to redo |
+| Window closed during restore | Re-download `subs-pipe.cmd` (fixed) and press `3` to finish renaming |
 | Colab `No MP3 found` | Upload into `audio_files/`, re-run cell |
 
 ---

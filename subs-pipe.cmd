@@ -274,6 +274,14 @@ set "GROQ_FROM_MENU=1"
 setlocal DisableDelayedExpansion
 set "GROQ_EXTRA="
 set /p "GROQ_EXTRA=Options (Enter = defaults, e.g. --lang en --force): "
+REM Strip shell metachars typed at the prompt so the transcribe call below cannot break.
+REM Each line is guarded by if defined: substitution on an empty value is unsafe.
+if defined GROQ_EXTRA set "GROQ_EXTRA=%GROQ_EXTRA:&= %"
+if defined GROQ_EXTRA set "GROQ_EXTRA=%GROQ_EXTRA:|= %"
+if defined GROQ_EXTRA set "GROQ_EXTRA=%GROQ_EXTRA:<= %"
+if defined GROQ_EXTRA set "GROQ_EXTRA=%GROQ_EXTRA:>= %"
+if defined GROQ_EXTRA set "GROQ_EXTRA=%GROQ_EXTRA:(= %"
+if defined GROQ_EXTRA set "GROQ_EXTRA=%GROQ_EXTRA:)= %"
 cmd /v:off /d /c ""%~f0" --outdir "%subtitles_dir%" "%upload_dir%" %GROQ_EXTRA%"
 REM Preserve ERRORLEVEL across endlocal: the full line is expanded before
 REM execution, so %ERRORLEVEL% still holds cmd's exit code when set runs.
@@ -336,6 +344,7 @@ if not exist "!subtitles_dir!" (
 
 set /a restored=0
 set /a missing=0
+set /a notfound=0
 for /f "usebackq tokens=1* delims=:" %%a in (`findstr /n "^^" "!name_log!"`) do (
     set "original_name=%%b"
     set "new_srt_name=video_%%a.srt"
@@ -348,20 +357,22 @@ for /f "usebackq tokens=1* delims=:" %%a in (`findstr /n "^^" "!name_log!"`) do 
             )
             ren "!subtitles_dir!\!new_srt_name!" "!original_name!.srt"
             if !errorlevel! equ 0 (
-                echo Restored: !new_srt_name! -^> !original_name!.srt
+                for /f "delims=" %%o in ("!original_name!") do echo Restored: !new_srt_name! -^> %%o.srt
                 set /a restored+=1
             ) else (
                 echo Failed to rename: !new_srt_name!
                 set /a missing+=1
             )
         ) else (
-            echo Skipped: !new_srt_name! not in subtitles\ (already restored?).
+            echo Skipped: !new_srt_name! - already restored, nothing to do.
             set /a missing+=1
+            set /a notfound+=1
         )
     )
 )
 echo.
 echo Summary: !restored! restored, !missing! skipped.
+if !restored! equ 0 if !missing! gtr 0 if !notfound! equ !missing! echo Tip: nothing renamed - files were already restored, nothing to do.
 exit /b
 
 REM Install ffmpeg and add it to PATH
