@@ -1,0 +1,10 @@
+# subs-pipe runtime — never commit local media, keys, or outputs
+upload/
+subtitles/
+tools/
+.env
+names.log
+original_names.log
+*.verbose.json
+*.mp3
+*.srt

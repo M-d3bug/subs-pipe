@@ -1,113 +1,106 @@
-# Video to Subtitles with Whisper (Colab)
+# subs-pipe
 
-Turn your videos into **SRT subtitle files** for free, using OpenAI's Whisper speech-to-text model running on Google Colab. This repository gives you two simple tools:
+Media → `.srt` subtitles, Groq-first with Colab fallback. Short name on purpose: the provider/model can change, the pipe stays.
 
-- A **Colab notebook** that transcribes your audio into clean, properly formatted subtitles.
-- A **Windows helper script** that converts your videos to audio, prepares them for upload, and restores the original file names afterward.
+Single Windows entry point (`subs-pipe.cmd`) + optional Colab notebook. Filenames are anonymized during transcription, then restored.
 
-No coding experience required — just follow the steps below.
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/M-d3bug/subs-pipe/blob/main/transcribe_colab.ipynb)
 
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/M-d3bug/colab-whisper/blob/main/transcribe_colab.ipynb)
-
+> Renamed from `colab-whisper`. Old `prepare_videos.cmd` was removed from `main` (still in git history).
 
 ---
 
-## What this tool does
+## Quickstart (Groq automatic, recommended)
 
-The workflow has three stages:
+1. Put `subs-pipe.cmd` in an empty folder. Double-click it.
+2. Press `F` once to install/check `ffmpeg` (needed for converts + >25 MB files).
+3. Press `1`, drop files/folder or paste a path. Converts to `upload\video_1.mp3`, `video_2.mp3`, … names saved in `upload\names.log`.
+4. Press `2`, optionally add flags (e.g. `--lang en --force`). Enter your `GROQ_API_KEY` once when asked — get one free at https://console.groq.com/keys, offered to save to `.env` beside the script.
+5. Done: real-named `.srt` files land in `subtitles\`.
 
-1. **Prepare** — On your Windows PC, the helper script converts your video files into MP3 audio and gives them simple names (like `video_1.mp3`) so they upload cleanly to Colab. It remembers the original names.
-2. **Transcribe** — You open the notebook in Google Colab (free, runs in your browser), upload the MP3s, and Whisper writes subtitle (`.srt`) files for each one.
-3. **Restore** — Back on your PC, the helper script renames the subtitle files back to their original video names, so everything matches up.
+No Groq? Use Colab fallback:
 
-The result: a neatly named `.srt` subtitle file for every video you started with.
-
----
-
-## What you'll need
-
-- A **Google account** (to use Google Colab — it's free).
-- A **Windows PC** for the preparation steps.
-- **FFmpeg** installed on Windows (the helper script uses it to convert videos to MP3).
-  - Easiest way: download from <https://ffmpeg.org/download.html>, or install with a package manager such as `winget install ffmpeg`.
-- Your **video files** (`.mp4`, `.avi`, `.mov`, `.webm`, or `.mkv`).
+1. Do step 3 above.
+2. Open the badge notebook, upload `upload\*.mp3` to `audio_files/`, Run all, download `transcripts.zip`.
+3. Unzip into `subtitles\`, press `3` in the menu to restore real names.
 
 ---
 
-## Step 1 — Prepare your videos (Windows)
+## Direct mode (no menu, drag-drop + CLI)
 
-1. Download `prepare_videos.cmd` from this repository and save it somewhere convenient (for example, your Desktop).
-2. **Double-click** `prepare_videos.cmd` to run it. A menu appears.
-3. Press **1** then **Enter** — this creates a folder structure next to the script:
-   ```
-   main/
-     1.default/      <- put your original videos here
-        mp3/         <- converted audio appears here
-     2.upload/       <- renamed MP3s ready to upload
-     3.ready/        <- where finished subtitles go
-   ```
-4. Copy your video files into **`main\1.default`**.
-5. In the script menu, press **2** then **Enter** — your videos are converted to MP3 inside `main\1.default\mp3`.
-6. In the script menu, press **3** then **Enter** — the MP3s are copied to **`main\2.upload`** with simple names (`video_1.mp3`, `video_2.mp3`, …) and the original names are saved automatically.
-
-You are now ready to upload the files from `main\2.upload`.
-
----
-
-## Step 2 — Transcribe in Colab
-
-1. Click the **"Open in Colab"** badge at the top of this page.
-2. In Colab, go to **Runtime → Change runtime type** and set **Hardware accelerator** to **GPU** (recommended for speed).
-3. Click **Runtime → Run all** (or run each cell top-to-bottom with the play button).
-   - The first cell installs Whisper and FFmpeg and creates an `audio_files` folder.
-4. When prompted, use the **file browser** on the left of Colab to upload the MP3s from your `main\2.upload` folder into the `audio_files` directory.
-5. Run the remaining cells. Whisper transcribes each file (in English, using the fast `turbo` model) and produces `.srt` subtitle files in a `transcripts` folder.
-6. The final cell creates **`transcripts.zip`**. Click it in the file browser to **download** it to your PC.
-
----
-
-## Step 3 — Restore original file names (Windows)
-
-1. Extract `transcripts.zip` and copy its contents (the `video_N.srt` files) into **`main\3.ready`**.
-2. Run `prepare_videos.cmd` again and press **4** then **Enter**.
-3. The script reads the saved names and renames each `video_N.srt` back to its original video name. Your subtitles now match your source videos exactly.
-
----
-
-## Folder layout
-
-```
-main/
-  1.default/        Original videos go here
-    mp3/            Videos converted to MP3
-  2.upload/         Renamed MP3s to upload to Colab
-  3.ready/          Finished subtitles land here (before name restore)
-  original_names.log  Hidden record of original file names
+```bat
+subs-pipe.cmd "C:\Audio\talk.mp3" --lang en
+subs-pipe.cmd C:\Audio --recursive
+subs-pipe.cmd "C:\Audio" --outdir "C:\Subs" --force --dry-run
 ```
 
+| Flag | Default | What |
+|------|---------|------|
+| `--lang CODE` | auto | e.g. `en`, `es`, `de` |
+| `--prompt TEXT` | — | style/spelling hint, same language as audio |
+| `--model NAME` | `whisper-large-v3-turbo` | also `whisper-large-v3` |
+| `--outdir DIR` | beside input | write `.srt` elsewhere |
+| `--max-line N` | `42` | max chars per line |
+| `--max-sec SEC` | `5` | max seconds per cue |
+| `--force` | off | re-transcribe even if `.srt` newer |
+| `--recursive` | off | include subfolders |
+| `--keep-json` | off | keep raw `.verbose.json` |
+| `--dry-run` | off | list only, no upload |
+| `--help` | — | full help |
+
+API key order: `--apikey` → `%GROQ_API_KEY%` → `.env` (`GROQ_API_KEY=...`) → prompt.
+
 ---
 
-## Files in this repository
+## What you need
 
-| File | What it is |
-|------|------------|
-| `transcribe_colab.ipynb` | The Google Colab notebook that runs Whisper and produces SRT subtitles. |
-| `prepare_videos.cmd` | A Windows helper script to convert videos to MP3, prepare them for upload, and restore subtitle file names. |
-| `README.md` | This file. |
+* Windows 10/11 + `ffmpeg` (press `F`, or `winget install -e --id Gyan.FFmpeg`)
+* Groq key for automatic mode, or Google account for Colab fallback
+* Inputs: `.mp4 .mkv .avi .mov .webm .wmv .mp3 .wav .m4a .flac .ogg .aac .mpeg .mpga`
+
+Large files (>25 MB Groq free-tier limit): auto-compress to 16 kHz mono 64k MP3, else split into ~10-min chunks and stitch timestamps back.
+
+---
+
+## Folders
+
+```
+<folder beside subs-pipe.cmd>\
+  upload\       in:  video_1.mp3 … + names.log (anonymized)
+  subtitles\    out: <realname>.srt
+  .env          GROQ_API_KEY=... (git-ignored, never commit)
+  tools\        portable ffmpeg fallback (git-ignored)
+```
+
+Privacy: only `video_N.mp3` is uploaded. `names.log` stays local and maps `N → original name` for restore.
+
+---
+
+## Files in this repo
+
+| File | What |
+|------|------|
+| `subs-pipe.cmd` | menu + Groq transcribe + Colab restore + ffmpeg installer (single file) |
+| `transcribe_colab.ipynb` | optional Colab fallback (Groq is default) |
+| `README.md` | this file |
+
+Removed from `main` (in history): `prepare_videos.cmd` — superseded by option `1` in `subs-pipe.cmd`.
 
 ---
 
 ## Troubleshooting
 
-- **"No MP3 files found" in Colab** — Make sure you uploaded the files from `main\2.upload` into the `audio_files` folder in Colab's file browser, then re-run the cell.
-- **`ffmpeg` is not recognized** (Windows) — FFmpeg isn't installed or isn't on your PATH. Install it and reopen the command prompt.
-- **Colab ran out of time or memory** — Colab sessions are temporary. Re-run the notebook, or transcribe fewer files at once.
-- **Subtitle names didn't restore** — Confirm the `video_N.srt` files are inside `main\3.ready` and that `original_names.log` still exists in `main`.
+* `ffmpeg not found` → press `F`, reopen script (PATH refresh).
+* `401 / invalid_api_key` → new key at console.groq.com/keys, check spaces, delete bad `.env` line.
+* `No prepared files` → press `1` first.
+* `names.log missing/empty` → you cleared `upload\`, re-run `1`.
+* `SRT skipped, already restored?` → normal if option `2/3` ran twice; use `--force` in direct mode.
+* Colab `No MP3 found` → upload into `audio_files/`, re-run cell.
 
 ---
 
-## License & credits
+## Credits
 
-- Speech recognition powered by [OpenAI Whisper](https://github.com/openai/whisper).
-- Audio conversion uses [FFmpeg](https://ffmpeg.org/).
-- This project is provided as-is for personal and educational use. Add a license file (e.g. MIT) if you plan to share it widely.
+* Transcription: Groq `whisper-large-v3-turbo` / OpenAI Whisper (Colab)
+* Audio: FFmpeg
+* License: MIT — see `LICENSE`
