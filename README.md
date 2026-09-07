@@ -6,7 +6,6 @@ Single Windows entry point (`subs-pipe.cmd`) + optional Colab notebook. Filename
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/M-d3bug/subs-pipe/blob/main/transcribe_colab.ipynb)
 
-> Renamed from `colab-whisper`. Old `prepare_videos.cmd` was removed from `main` (still in git history).
 
 ---
 
