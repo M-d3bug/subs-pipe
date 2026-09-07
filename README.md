@@ -104,5 +104,5 @@ Only `video_N.mp3` is uploaded. `names.log` stays local for restore.
 
 ## Credits
 
-* Groq `whisper-large-v3-turbo` / OpenAI `Whisper` /Google `Colab Notebook` - FFmpeg - MIT, see `LICENSE`
+* Groq `whisper-large-v3-turbo` / OpenAI `Whisper` /Google `Colab Notebook` / FFmpeg - MIT, see `LICENSE`
 
